@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simulazione Allunaggio</title>
+  <link rel="stylesheet" href="css/stile.css" />
+</head>
+<body>
+  <h1>Allunaggio</h1>
+  <div class="contenitore" id="menu-container">
+    <div class="note-tecniche">
+      <div class="note-box">
+        <span class="label-yellow">Distanza:</span> <span id="distanza-note" style="color:#fff;">---</span> m<br><br>
+        <b>Note tecniche:</b><br>
+        La simulazione utilizza la gravità lunare costante (1.66 m/s²).<br>
+        Inserisci valori realistici per massa e velocità.<br>
+        <br>
+        <b>Valori accettabili:</b><br>
+        <span class="label-blu">Massa navicella</span>: da 10 a 100.000 kg<br>
+        <span class="label-blu">Velocità iniziale</span>: da 1 a 1.000 m/s
+      </div>
+    </div>
+    <div class="input">
+      <label for="massa">Massa navicella (kg):</label>
+      <input type="number" id="massa" min="10" max="100000" />
+      <label for="velocita" style="white-space:nowrap;">Velocità iniziale (m/s):</label>
+      <input type="number" id="velocita" min="1" max="1000" />
+      <button onclick="calcolaTempo()">Calcola</button>
+      <button id="confermaBtn" style="display:none; margin-top:10px;" onclick="mostraGioco()">Conferma</button>
+    </div>
+    <div class="output">
+      <p id="risultato"></p>
+    </div>
+  </div>
+
+  <div id="game-section" style="display:none;">
+    <div id="game">
+      <div id="stars"></div>
+      <div id="lander">
+        <div id="window"></div>
+        <div id="flame"></div>
+        <div id="left-flame" class="side-flame"></div>
+        <div id="right-flame" class="side-flame"></div>
+        <div id="fin-left" class="fin"></div>
+        <div id="fin-right" class="fin"></div>
+      </div>
+      <div id="surface"></div>
+      <div id="target">H</div>
+      <div id="asteroid-container"></div>
+      <div id="info">
+        <p>Velocità: <span id="speed">0</span></p>
+        <p>Motore: <span id="engine">OFF</span></p>
+        <p>Carburante: <span id="fuel">100</span></p>
+        <p>Punteggio: <span id="score">0</span></p>
+        <p id="message"></p>
+      </div>
+    </div>
+    <audio id="engine-sound" src="https://actions.google.com/sounds/v1/ambiences/rocket_whoosh.ogg" preload="auto"></audio>
+    <audio id="collision-sound" src="https://actions.google.com/sounds/v1/vehicles/vehicle_collision_2.ogg" preload="auto"></audio>
+    <audio id="landing-success-sound" src="https://actions.google.com/sounds/v1/alarms/success_tone.ogg" preload="auto"></audio>
+    <audio id="fuel-empty-sound" src="https://actions.google.com/sounds/v1/alarms/buzzer.ogg" preload="auto"></audio>
+  </div>
+
+  <script src="js/script.js"></script>
+  <script src="js/game.js" id="gameScript" style="display:none;"></script>
+  <script>
+  const r = 1.7374e6;
+  let distanzaLuna = Math.random() * (3 * r - r) + r;
+
+  function aggiornaDistanzaNote() {
+    const distanzaSpan = document.getElementById("distanza-note");
+    if (distanzaSpan) {
+      distanzaSpan.textContent = distanzaLuna.toLocaleString('it-IT', {maximumFractionDigits: 0});
+    }
+  }
+
+  aggiornaDistanzaNote();
+
+  function calcolaTempo() {
+    const massaNav = parseFloat(document.getElementById("massa").value);
+    const velocitaIniziale = parseFloat(document.getElementById("velocita").value);
+
+    if (
+      isNaN(massaNav) || isNaN(velocitaIniziale) ||
+      massaNav < 10 || massaNav > 100000 ||
+      velocitaIniziale < 1 || velocitaIniziale > 1000
+    ) {
+      document.getElementById("risultato").innerHTML = "Inserisci valori validi!";
+      document.getElementById("confermaBtn").style.display = "none";
+      return;
+    }
+
+    const G = 6.67430e-11;
+    const M_moon = 7.34767309e22;
+
+    const distanza = distanzaLuna;
+    const accelerazione = G * M_moon / (distanza * distanza);
+
+    const delta = Math.pow(velocitaIniziale, 2) + 2 * accelerazione * distanza;
+    let tempo;
+    if (delta < 0) {
+      tempo = NaN;
+    } else {
+      tempo = (-velocitaIniziale + Math.sqrt(delta)) / accelerazione;
+    }
+
+    document.getElementById("risultato").innerHTML =
+      `<span style="white-space:nowrap;">Accelerazione: <b>${accelerazione.toFixed(2)} m/s<sup>2</sup></b></span><br>` +
+      `Tempo: <b>${isNaN(tempo) ? "Non calcolabile" : tempo.toFixed(2) + " s"}</b>`;
+
+    document.getElementById("confermaBtn").style.display = "inline-block";
+  }
+
+  function mostraGioco() {
+    document.getElementById("menu-container").style.display = "none";
+    document.getElementById("game-section").style.display = "block";
+    document.querySelector("h1").style.display = "none";
+    const note = document.querySelector(".note-tecniche");
+    if (note) note.style.display = "none";
+    if (typeof startGame === "function") startGame();
+  }
+  </script>
+</body>
+</html>
